@@ -178,9 +178,11 @@ func PushToGraylogUdp(dir_watcher Dir_watcher, ip string, payload *gelf.Message)
 			gelfWriter, err := gelf.NewTCPWriter(ip)
 			if err != nil {
 				log.Println("gelf.NewWriter error : %s", err)
+				return
 			}
 			if err := gelfWriter.WriteMessage(payload); err != nil {
 				log.Println("gelf.WriteMessage error: %s", err)
+				return
 			}
 			fmt.Println("IP:>", ip)
 			fmt.Println("payload: ", payload)
