@@ -1,0 +1,54 @@
+# payload_level is an int : 
+# 0 Emergency	emerg (panic)	Système inutilisable.
+# 1 Alert	alert Une intervention immédiate est nécessaire.
+# 2 Critical	crit  Erreur critique pour le système.
+# 3 Error	err (error)  Erreur de fonctionnement.
+# 4 Warning	warn (warning)	    Avertissement (une erreur peut intervenir si aucune action n'est prise).
+# 5 Notice	notice		    Événement normal méritant d'être signalé.
+# 6 Informational	info		    Pour information.
+# 7 Debugging	debug		    Message de mise au point.
+
+# watcher_type should be "event" or "loop"
+# loop sert a lire toutes les "loop_sleep" le contenu du repertoire  et supprime les fichiers selon le removetime
+# event utilise les notifications système pour supprimer les fichiers dès leur creation
+# si graylog est défini une trace est envoyé au serveur à chaque suppression
+
+title = "TOML fred service config file"
+
+[owner]
+name = "FLO"
+organization = ""
+dob = 2017-09-10T20:30:00Z
+
+
+[graylog]
+  url = "10.10.10.10"
+  format = "gelf"
+  protocol = "udp"
+  port = 12666
+
+
+
+[watchers]
+  [watchers.test1]
+  watcher_type = "loop"
+  name = "Watch test tmp"
+  directory = "/tmp/test"
+  ext_file = ".tmp"
+  payload_host = "srvprod1"
+  payload_level = 6
+  environment = "prod"
+  # écart entre la date du fichier et du systeme, avant suppression
+  removetime = "1h"
+  # scan le répertoire toutes les :
+  loop_sleep = "5m"
+
+
+ [watchers.test2]
+  watcher_type = "event"
+  name = "Watcher log test2"
+  directory = "/tmp/test2"
+  ext_file = ".log"
+  payload_host = "srvlog1"
+  payload_level = 6
+  environment = "prod"

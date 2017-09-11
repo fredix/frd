@@ -1,0 +1,51 @@
+ cat /etc/init.d/fred
+#!/bin/bash
+#
+#	/etc/rc.d/init.d/fred
+#
+#	<description of the *service*>
+#	<any general comments about this init script>
+#
+# chkconfig: 345 70 30
+# Source function library.
+. /etc/init.d/functions
+
+start() {
+	echo -n "Starting fred: "
+        /usr/local/bin/fred /etc/fred.toml > /var/log/fred.log 2>&1 &
+	touch /var/lock/subsys/fred
+	return 0
+}	
+
+stop() {
+	echo -n "Shutting down fred: "
+	killall fred
+	rm -f /var/lock/subsys/fred
+	return 0
+}
+
+case "$1" in
+    start)
+	start
+	;;
+    stop)
+	stop
+	;;
+    status)
+	;;
+    restart)
+    	stop
+	start
+	;;
+    reload)
+	;;
+    condrestart)
+	[ -f /var/lock/subsys/fred ] && restart
+	;;
+    *)
+	echo "Usage: fred {start|stop|status|reload|restart"
+	exit 1
+	;;
+esac
+exit $?
+
