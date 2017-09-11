@@ -26,7 +26,7 @@ FRED peut envoyer une trace des fichiers supprimés vers un serveur Graylog.
 
 ### create 32 bits windows service
 
-	sc create graylogpush binpath= "\"C:\Users\user\sources\fred\win\fred_i386.exe\" \"C:\Users\user\sources\fred\win\fred.toml\" --service" depend= Tcpip
+	sc create fred binpath= "\"C:\Users\user\sources\fred\win\fred_i386.exe\" \"C:\Users\user\sources\fred\win\fred.toml\" --service" depend= Tcpip
 
 
 ## Setup
