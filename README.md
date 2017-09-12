@@ -12,7 +12,7 @@ FRED peut envoyer une trace des fichiers supprimés vers un serveur Graylog.
 	
 	Linux :
 
-	go build -o ../release/linux/fred  fred.go
+	go build -o ../release/linux/fred fred.go
 
 	windows :
 
@@ -22,7 +22,7 @@ FRED peut envoyer une trace des fichiers supprimés vers un serveur Graylog.
 
 	64 bits :
 
-	GOOS=windows GOARCH=amd64 go build -o ../win/fred_amd64.exe fred.go
+	GOOS=windows GOARCH=amd64 go build -o ../release/win/fred_amd64.exe fred.go
 
 ### create 32 bits windows service
 

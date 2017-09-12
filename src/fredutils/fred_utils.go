@@ -73,17 +73,21 @@ func ListFilesAndPush(graylog *Graylog, watcher Watcher) {
 		ip = graylog.Ip + ":" + strconv.Itoa(graylog.Port)
 	}
 
-	files, _ := ioutil.ReadDir(watcher.Directory)
-	for _, f := range files {
-		file_ext := filepath.Ext(f.Name())
-		if file_ext == watcher.Ext_file {
-			fmt.Println("file to remove : ", watcher.Directory+"/"+f.Name())
-			payload := payload(watcher.Environment, watcher.Name, f.Name(), watcher.Directory+"/"+f.Name(), watcher.Payload_host, watcher.Payload_level)
-			RemoveFile(
-				watcher,
-				ip,
-				&payload)
+	if len(watcher.Ext_file) != 0 {
+		files, _ := ioutil.ReadDir(watcher.Directory)
+		for _, f := range files {
+			file_ext := filepath.Ext(f.Name())
+			if file_ext == watcher.Ext_file || watcher.Ext_file == "*" {
+				fmt.Println("file to remove : ", watcher.Directory+"/"+f.Name())
+				payload := payload(watcher.Environment, watcher.Name, f.Name(), watcher.Directory+"/"+f.Name(), watcher.Payload_host, watcher.Payload_level)
+				RemoveFile(
+					watcher,
+					ip,
+					&payload)
+			}
 		}
+	} else {
+		return
 	}
 }
 
@@ -364,7 +368,7 @@ func LogNewWatcher(graylog *Graylog, watcher Watcher) {
 					log.Println("created file:", event.Name)
 					file_ext := filepath.Ext(event.Name)
 
-					if file_ext == watcher.Ext_file {
+					if file_ext == watcher.Ext_file || watcher.Ext_file == "*" {
 						data := event.Name
 						log.Println("event.Name: ", string(data))
 

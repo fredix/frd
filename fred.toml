@@ -34,7 +34,7 @@ dob = 2017-09-10T20:30:00Z
   watcher_type = "loop"
   name = "Watch test tmp"
   directory = "/tmp/test"
-  ext_file = ".tmp"
+  ext_file = ".tmp" # "*" to match all files
   # define file_size : =size or <size or >size
   file_size = "=0"
   size_unit = "bytes" # bytes , kilobytes, megabytes , gigabytes , terabytes
@@ -42,7 +42,7 @@ dob = 2017-09-10T20:30:00Z
   payload_level = 6
   environment = "prod"
   # écart entre la date du fichier et du systeme, avant suppression
-  # format : Nh Nm Ns
+  # format : Nh Nm Ns (240h for 10 days)  
   removetime = "1h"
   # scan le répertoire toutes les , format : Nh Nm Ns
   loop_sleep = "5m"
