@@ -25,7 +25,7 @@ type tomlConfig struct {
 	Title    string
 	Owner    ownerInfo
 	Graylog  fredutils.Graylog
-	Watchers map[string]fredutils.Dir_watcher
+	Watchers map[string]fredutils.Watcher
 }
 
 type ownerInfo struct {
@@ -72,17 +72,17 @@ func (p *program) run() {
 
 	//        done := make(chan bool)
 
-	for watcherName, dir_watcher := range config.Watchers {
-		fmt.Printf("Watcher: %s (%s, %s, %s %s %d)\n", watcherName, dir_watcher.Directory, dir_watcher.Ext_file, dir_watcher.Payload_host, dir_watcher.Payload_level)
+	for watcherName, watcher := range config.Watchers {
+		fmt.Printf("Watcher: %s (%s, %s, %s %s %d)\n", watcherName, watcher.Directory, watcher.Ext_file, watcher.Payload_host, watcher.Payload_level)
 
-		fmt.Println("watcher type : ", dir_watcher.Watcher_type)
+		fmt.Println("watcher type : ", watcher.Watcher_type)
 
-		if dir_watcher.Watcher_type == "event" {
-			fmt.Println("watcher type EVENT : ", dir_watcher.Watcher_type)
+		if watcher.Watcher_type == "event" {
+			fmt.Println("watcher type EVENT : ", watcher.Watcher_type)
 			// launch watchers
-			go fredutils.LogNewWatcher(&config.Graylog, dir_watcher)
-		} else if dir_watcher.Watcher_type == "loop" {
-			fredutils.LoopDirectory(&config.Graylog, dir_watcher)
+			go fredutils.LogNewWatcher(&config.Graylog, watcher)
+		} else if watcher.Watcher_type == "loop" {
+			fredutils.LoopDirectory(&config.Graylog, watcher)
 		}
 
 	}

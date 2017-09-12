@@ -35,6 +35,9 @@ dob = 2017-09-10T20:30:00Z
   name = "Watch test tmp"
   directory = "/tmp/test"
   ext_file = ".tmp"
+  # define file_size : =size or <size or >size
+  file_size = "=0"
+  size_unit = "bytes" # bytes , kilobytes, megabytes , gigabytes , terabytes
   payload_host = "srvprod1"
   payload_level = 6
   environment = "prod"
@@ -50,6 +53,9 @@ dob = 2017-09-10T20:30:00Z
   name = "Watcher log test2"
   directory = "/tmp/test2"
   ext_file = ".log"
+  # define file_size : =size or <size or >size
+  file_size = "=0"
+  size_unit = "bytes" # bytes , kilobytes, megabytes , gigabytes , terabytes
   payload_host = "srvlog1"
   payload_level = 6
   environment = "prod"
