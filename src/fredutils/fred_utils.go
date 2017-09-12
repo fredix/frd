@@ -66,15 +66,18 @@ func LoopDirectory(graylog *Graylog, dir_watcher Dir_watcher) {
 }
 
 func ListFilesAndPush(graylog *Graylog, dir_watcher Dir_watcher) {
-	ip := graylog.Ip + ":" + strconv.Itoa(graylog.Port)
+	var ip string = ""
+	if len(graylog.Ip) != 0 && graylog.Port != 0 {
+		ip = graylog.Ip + ":" + strconv.Itoa(graylog.Port)
+	}
 
 	files, _ := ioutil.ReadDir(dir_watcher.Directory)
 	for _, f := range files {
 		file_ext := filepath.Ext(f.Name())
 		if file_ext == dir_watcher.Ext_file {
-			fmt.Println("file to push : ", dir_watcher.Directory+"/"+f.Name())
+			fmt.Println("file to remove : ", dir_watcher.Directory+"/"+f.Name())
 			payload := payload(dir_watcher.Environment, dir_watcher.Name, f.Name(), dir_watcher.Directory+"/"+f.Name(), dir_watcher.Payload_host, dir_watcher.Payload_level)
-			PushToGraylogUdp(
+			RemoveFile(
 				dir_watcher,
 				ip,
 				&payload)
@@ -135,15 +138,12 @@ func payload(environment string, msg string, messagelog string, file string, hos
 	return m
 }
 
-func PushToGraylogUdp(dir_watcher Dir_watcher, ip string, payload *gelf.Message) {
-
-	file := payload.Full
-	filepath := dir_watcher.Directory + "/" + file
-
-	log.Println("file pathpush :", filepath)
+func RemoveFile(dir_watcher Dir_watcher, ip string, payload *gelf.Message) {
+	file := payload.Extra["_file"].(string)
+	log.Println("file to remove :", file)
 
 	// get last modified time
-	filename, err := os.Stat(filepath)
+	filename, err := os.Stat(file)
 	if err != nil {
 		fmt.Println("error can not stat file : %s", err)
 		return
@@ -155,7 +155,7 @@ func PushToGraylogUdp(dir_watcher Dir_watcher, ip string, payload *gelf.Message)
 	}
 
 	filetime := filename.ModTime()
-	fmt.Println("filetime2 : ", filetime)
+	fmt.Println("filetime : ", filetime)
 
 	tnow := time.Now()
 
@@ -167,69 +167,34 @@ func PushToGraylogUdp(dir_watcher Dir_watcher, ip string, payload *gelf.Message)
 	fmt.Println("Duration : ", duration)
 
 	if diff > duration {
-		fmt.Println("> "+dir_watcher.Removetime+" REMOVE : ", filepath)
-		var err = os.Remove(filepath)
+		fmt.Println("> "+dir_watcher.Removetime+" REMOVE : ", file)
+		var err = os.Remove(file)
 		if err != nil {
-			log.Println("error on delete file %s ,error : %s", filepath, err.Error())
+			log.Println("error on delete file %s ,error : %s", file, err.Error())
 			return
 		}
 
 		if len(ip) != 0 {
-			gelfWriter, err := gelf.NewTCPWriter(ip)
-			if err != nil {
-				log.Println("gelf.NewWriter error : %s", err)
-				return
-			}
-			if err := gelfWriter.WriteMessage(payload); err != nil {
-				log.Println("gelf.WriteMessage error: %s", err)
-				return
-			}
-			fmt.Println("IP:>", ip)
-			fmt.Println("payload: ", payload)
+			PushToGraylogUdp(ip, payload)
 		}
 
 	} else {
 		fmt.Println("< ", dir_watcher.Removetime)
 	}
+}
 
-	//payload_id := payload.ID
-	/*
-		if file, ok := payload.Extra["_file"].(string); ok {
-			fmt.Println("file error, ", ok)
-		} else {
-
-		file_name := filepath.Base(file)
-		log.Println("file name :", file_name)
-	*/
-
-	//url := "http://192.168.51.57:12201/gelf"
-	//	fmt.Println("URL:>", url)
-	//	fmt.Println("PAYLOAD ID:>", payload_id)
-
-	//jsonStr, _ := json.Marshal(payload)
-
-	//fmt.Println("json: ", string(jsonStr))
-
-	//graylogAddr = ip:port
-
-	// log to both stderr and graylog2
-	//log.SetOutput(io.MultiWriter(os.Stderr, gelfWriter))
-	//gelfWriter.Write([]byte(jsonStr))
-	//var err error
-	/*
-		if err := gelfWriter.WriteMessage(payload); err !=nil {
-			log.Fatalf("gelf.NewWriter: %s", err)
-		}
-	*/
-
-	//log.Printf(string(jsonStr))
-
-	//t := time.Now()
-	//file_timestamp := t.Format("01-02-2006T15-04-05") + "-" + strconv.Itoa(t.Nanosecond())
-
-	// compare file_timestamp > file.timestamp
-	//os.Remove(file)
-
+func PushToGraylogUdp(ip string, payload *gelf.Message) {
+	gelfWriter, err := gelf.NewUDPWriter(ip)
+	if err != nil {
+		log.Println("gelf.NewUDPWriter error : %s", err)
+		return
+	}
+	if err := gelfWriter.WriteMessage(payload); err != nil {
+		log.Println("gelf.WriteMessage error: %s", err)
+		return
+	}
+	fmt.Println("IP:>", ip)
+	fmt.Println("payload: ", payload)
 }
 
 func PushToGraylogHttp(dir_watcher Dir_watcher, ip string, payload *Message) {
@@ -312,15 +277,16 @@ func LogNewWatcher(graylog *Graylog, dir_watcher Dir_watcher) {
 
 					if file_ext == dir_watcher.Ext_file {
 						data := event.Name
-						log.Println("data: ", string(data))
+						log.Println("event.Name: ", string(data))
 
 						//var sem = make(chan int, MaxTaches)
-						ip := graylog.Ip + ":" + strconv.Itoa(graylog.Port)
-						// fmt.Println("URL : " + url)
-
+						var ip string = ""
+						if len(graylog.Ip) != 0 && graylog.Port != 0 {
+							ip = graylog.Ip + ":" + strconv.Itoa(graylog.Port)
+						}
 						payload := payload(dir_watcher.Environment, dir_watcher.Name, string(data), event.Name, dir_watcher.Payload_host, dir_watcher.Payload_level)
 
-						go PushToGraylogUdp(
+						go RemoveFile(
 							dir_watcher,
 							ip,
 							&payload)

@@ -39,8 +39,9 @@ dob = 2017-09-10T20:30:00Z
   payload_level = 6
   environment = "prod"
   # écart entre la date du fichier et du systeme, avant suppression
+  # format : Nh Nm Ns
   removetime = "1h"
-  # scan le répertoire toutes les :
+  # scan le répertoire toutes les , format : Nh Nm Ns
   loop_sleep = "5m"
 
 
