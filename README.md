@@ -35,9 +35,9 @@ copier le binaire fred dans /usr/local/bin
 éditer le fichier fred.toml et le copier dans /etc
 
 
-## Créer un fichier service 
+## Create a user service file
 
-	cat /usr/lib/systemd/system/fred.service
+	cat /usr/lib/systemd/user/fred.service
 
 
 	[Unit]
@@ -54,10 +54,9 @@ copier le binaire fred dans /usr/local/bin
 	Alias=fred.service
 
 
-	systemctl daemon-reload
-	systemctl enable fred
-	systemctl start fred 
-	systemctl status fred -l 
+	systemctl --user enable fred
+	systemctl --user start fred 
+	systemctl --user status fred -l 
 
 ## Créer un fichier init.d pour les centos < 7
 
