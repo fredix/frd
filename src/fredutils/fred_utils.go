@@ -17,7 +17,8 @@ import (
 	// external packages
 	//"github.com/Graylog2/go-gelf/gelf"
 	"github.com/fsnotify/fsnotify"
-	"gopkg.in/Graylog2/go-gelf.v2/gelf"
+	//"gopkg.in/Graylog2/go-gelf.v2/gelf"
+	"gopkg.in/Graylog2/go-gelf.v1/gelf"
 )
 
 type Message struct {
@@ -161,9 +162,6 @@ func RemoveFile(watcher Watcher, ip string, payload *gelf.Message) {
 	filesize_bytes := filename.Size()
 	fmt.Println("filesize_bytes : %s", filesize_bytes)
 
-	lspecifiedsize := watcher.File_size[1:len(watcher.File_size)]
-	fmt.Println("Lspecifiedsize : %s", lspecifiedsize)
-
 	specifiedsize, err := strconv.Atoi(watcher.File_size[1:len(watcher.File_size)])
 	if err != nil {
 		fmt.Println("unable to extract file size watcher.File_size : ", watcher.File_size)
@@ -245,7 +243,7 @@ func RemoveFile(watcher Watcher, ip string, payload *gelf.Message) {
 		return
 	}
 
-	// sized tests are passed
+	// sized tests ok
 
 	filetime := filename.ModTime()
 	fmt.Println("filetime : ", filetime)
@@ -277,9 +275,9 @@ func RemoveFile(watcher Watcher, ip string, payload *gelf.Message) {
 }
 
 func PushToGraylogUdp(ip string, payload *gelf.Message) {
-	gelfWriter, err := gelf.NewUDPWriter(ip)
+	gelfWriter, err := gelf.NewWriter(ip)
 	if err != nil {
-		log.Println("gelf.NewUDPWriter error : %s", err)
+		log.Println("gelf.NewWriter error : %s", err)
 		return
 	}
 	if err := gelfWriter.WriteMessage(payload); err != nil {

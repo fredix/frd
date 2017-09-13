@@ -1,7 +1,9 @@
 # Files Removal Enforced Daemon
 
-FRED est un daemon qui permet de supprimer des fichiers dans des répertoires. Il peut scruter les répertoires sur une boucle de temps définie (loop) ou en temps réel (event).
-FRED peut envoyer une trace des fichiers supprimés vers un serveur Graylog. 
+FRED is a daemon which allow to remove files from your directories. If you use watcher_type = "event" FRED will delete files as soon as they are created and if they match ext_file and file_size. If you need to check a gap between the file date and system date you should use watcher_type="loop".  
+FRED can send trace of removed files to a graylog server.  
+WARNING : test FRED with a test directory  
+WARNING2 : FRED has not been tested on Windows at this time, take care.
 
 
 ## Build
@@ -31,11 +33,11 @@ FRED peut envoyer une trace des fichiers supprimés vers un serveur Graylog.
 
 ## Setup
 
-copier le binaire fred dans /usr/local/bin  
-éditer le fichier fred.toml et le copier dans /etc
+cp fred /usr/local/bin/
+edit fred.toml and copy to /etc
 
 
-## Create a user service file
+## systemd service file
 
 	cat /usr/lib/systemd/user/fred.service
 
