@@ -33,14 +33,13 @@ WARNING2 : FRED has not been tested on Windows at this time, take care.
 
 ## Setup
 
-cp fred /usr/local/bin/
+cp fred /usr/local/bin/  
 edit fred.toml and copy to /etc
 
 
 ## systemd service file
 
-	cat /usr/lib/systemd/user/fred.service
-
+/usr/lib/systemd/user/fred.service
 
 	[Unit]
 	Description=FRED
@@ -55,14 +54,15 @@ edit fred.toml and copy to /etc
 	WantedBy=multi-user.target
 	Alias=fred.service
 
+start service
 
 	systemctl --user enable fred
 	systemctl --user start fred 
 	systemctl --user status fred -l 
 
-## Créer un fichier init.d pour les centos < 7
+## System V
 
-	cat /etc/init.d/fred 
+/etc/init.d/fred 
 
 	#!/bin/bash
 	#
