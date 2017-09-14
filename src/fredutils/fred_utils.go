@@ -81,9 +81,9 @@ func ListFilesAndPush(graylog *Graylog, watcher Watcher) {
 		for _, f := range files {
 			file_ext := filepath.Ext(f.Name())
 			if file_ext == watcher.Ext_file || watcher.Ext_file == "*" {
-				fmt.Println("ListFilesAndPush file to remove : ", watcher.Directory+"/"+f.Name())
+				//fmt.Println("ListFilesAndPush file to remove : ", watcher.Directory+"/"+f.Name())
 				payload, err := payload(watcher.Environment, watcher.Name, f.Name(), watcher.Directory+"/"+f.Name(), watcher.Payload_host, watcher.Payload_level)
-				if err != nil {
+				if err == nil {
 					RemoveFile(
 						watcher,
 						ip,
@@ -95,27 +95,6 @@ func ListFilesAndPush(graylog *Graylog, watcher Watcher) {
 		return
 	}
 }
-
-/*
-func payload(environment string, msg string, messagelog string, file string, host string, level int) Message {
-
-	t := time.Now()
-	m := Message{
-		Version:    "1.1",
-		Environment: environment,
-		Message:    msg,
-		Host:       host,
-		Level:      level,
-		MessageLog: messagelog,
-		File:       file,
-		Localtime:  t.Format("01-02-2006T15-04-05"),
-	}
-
-
-
-	return m
-}
-*/
 
 func payload(environment string, msg string, messagelog string, file string, host string, level int) (gelf.Message, error) {
 
@@ -155,7 +134,7 @@ func payload(environment string, msg string, messagelog string, file string, hos
 
 func RemoveFile(watcher Watcher, ip string, payload *gelf.Message) {
 	file := payload.Extra["_file"].(string)
-	log.Println("file to remove :", file)
+	//log.Println("check file to remove :", file)
 
 	// get last modified time
 	filename, err := os.Stat(file)
@@ -164,91 +143,94 @@ func RemoveFile(watcher Watcher, ip string, payload *gelf.Message) {
 		return
 	}
 
-	filesize_bytes := filename.Size()
-	fmt.Println("filesize_bytes : %s", filesize_bytes)
+	if filename.IsDir() == false {
+		fmt.Println("not directory : ", filename)
+		filesize_bytes := filename.Size()
+		fmt.Println("filesize_bytes : %s", filesize_bytes)
 
-	specifiedsize, err := strconv.Atoi(watcher.File_size[1:len(watcher.File_size)])
-	if err != nil {
-		fmt.Println("unable to extract file size watcher.File_size : ", watcher.File_size)
-		return
-	}
-
-	fmt.Println("specifiedsize : %s", specifiedsize)
-
-	// convert specifiedsize to bytes
-	var filesize_kilobytes int64 = 0
-	var filesize_float64 float64 = 0
-
-	switch watcher.Size_unit {
-	case "bytes":
-		filesize_kilobytes = filesize_bytes
-
-	case "kilobytes":
-		filesize_kilobytes = (filesize_bytes / 1024)
-
-	case "megabytes":
-		filesize_kilobytes = (filesize_bytes / 1024)
-		filesize_megabytes := (float64)(filesize_kilobytes / 1024) // cast to type float64
-		filesize_float64 = filesize_megabytes
-	case "gigabytes":
-		filesize_kilobytes = (filesize_bytes / 1024)
-		filesize_megabytes := (float64)(filesize_kilobytes / 1024) // cast to type float64
-		filesize_gigabytes := (filesize_megabytes / 1024)
-		filesize_float64 = filesize_gigabytes
-
-	case "terabytes":
-		filesize_kilobytes = (filesize_bytes / 1024)
-		filesize_megabytes := (float64)(filesize_kilobytes / 1024) // cast to type float64
-		filesize_gigabytes := (filesize_megabytes / 1024)
-		filesize_terabytes := (filesize_gigabytes / 1024)
-		filesize_float64 = filesize_terabytes
-
-	default:
-		fmt.Println("size_unit failed : ", watcher.Size_unit)
-		return
-	}
-
-	switch operator := watcher.File_size[0:1]; operator {
-	case "=":
-		if filesize_float64 != 0 {
-			if int(filesize_float64) != specifiedsize {
-				fmt.Println("filesize not equal  : %f, %d", filesize_float64, specifiedsize)
-				return
-			}
-		} else if int(filesize_kilobytes) != specifiedsize {
-			fmt.Println("filesize not equal  : %d, %d", filesize_kilobytes, specifiedsize)
+		specifiedsize, err := strconv.Atoi(watcher.File_size[1:len(watcher.File_size)])
+		if err != nil {
+			fmt.Println("unable to extract file size watcher.File_size : ", watcher.File_size)
 			return
 		}
 
-	case "<":
-		if filesize_float64 != 0 {
-			if int(filesize_float64) >= specifiedsize {
-				fmt.Println("filesize not <  : %f, %d", filesize_float64, specifiedsize)
-				return
-			}
-		} else if int(filesize_kilobytes) >= specifiedsize {
-			fmt.Println("filesize not <  : %d, %d", filesize_kilobytes, specifiedsize)
+		fmt.Println("specifiedsize : %s", specifiedsize)
+
+		// convert specifiedsize to bytes
+		var filesize_kilobytes int64 = 0
+		var filesize_float64 float64 = 0
+
+		switch watcher.Size_unit {
+		case "bytes":
+			filesize_kilobytes = filesize_bytes
+
+		case "kilobytes":
+			filesize_kilobytes = (filesize_bytes / 1024)
+
+		case "megabytes":
+			filesize_kilobytes = (filesize_bytes / 1024)
+			filesize_megabytes := (float64)(filesize_kilobytes / 1024) // cast to type float64
+			filesize_float64 = filesize_megabytes
+		case "gigabytes":
+			filesize_kilobytes = (filesize_bytes / 1024)
+			filesize_megabytes := (float64)(filesize_kilobytes / 1024) // cast to type float64
+			filesize_gigabytes := (filesize_megabytes / 1024)
+			filesize_float64 = filesize_gigabytes
+
+		case "terabytes":
+			filesize_kilobytes = (filesize_bytes / 1024)
+			filesize_megabytes := (float64)(filesize_kilobytes / 1024) // cast to type float64
+			filesize_gigabytes := (filesize_megabytes / 1024)
+			filesize_terabytes := (filesize_gigabytes / 1024)
+			filesize_float64 = filesize_terabytes
+
+		default:
+			fmt.Println("size_unit failed : ", watcher.Size_unit)
 			return
 		}
 
-	case ">":
-		if filesize_float64 != 0 {
-			if int(filesize_float64) <= specifiedsize {
-				fmt.Println("filesize not >  : %f, %d", filesize_float64, specifiedsize)
+		switch operator := watcher.File_size[0:1]; operator {
+		case "=":
+			if filesize_float64 != 0 {
+				if int(filesize_float64) != specifiedsize {
+					fmt.Println("filesize not equal  : %f, %d", filesize_float64, specifiedsize)
+					return
+				}
+			} else if int(filesize_kilobytes) != specifiedsize {
+				fmt.Println("filesize not equal  : %d, %d", filesize_kilobytes, specifiedsize)
 				return
 			}
-		} else if int(filesize_kilobytes) <= specifiedsize {
-			fmt.Println("filesize not >  : %d, %d", filesize_kilobytes, specifiedsize)
+
+		case "<":
+			if filesize_float64 != 0 {
+				if int(filesize_float64) >= specifiedsize {
+					fmt.Println("filesize not <  : %f, %d", filesize_float64, specifiedsize)
+					return
+				}
+			} else if int(filesize_kilobytes) >= specifiedsize {
+				fmt.Println("filesize not <  : %d, %d", filesize_kilobytes, specifiedsize)
+				return
+			}
+
+		case ">":
+			if filesize_float64 != 0 {
+				if int(filesize_float64) <= specifiedsize {
+					fmt.Println("filesize not >  : %f, %d", filesize_float64, specifiedsize)
+					return
+				}
+			} else if int(filesize_kilobytes) <= specifiedsize {
+				fmt.Println("filesize not >  : %d, %d", filesize_kilobytes, specifiedsize)
+				return
+			}
+
+			// fmt.Println("file_size operator : %s, %s, %s", operator, filesize_kilobytes, specifiedsize)
+		default:
+			fmt.Println("file_size operator error : %s", operator)
 			return
 		}
-
-		// fmt.Println("file_size operator : %s, %s, %s", operator, filesize_kilobytes, specifiedsize)
-	default:
-		fmt.Println("file_size operator error : %s", operator)
-		return
 	}
-
 	// sized tests ok
+	// now check gap timestamp
 
 	filetime := filename.ModTime()
 	fmt.Println("filetime : ", filetime)
@@ -264,10 +246,25 @@ func RemoveFile(watcher Watcher, ip string, payload *gelf.Message) {
 
 	if diff > duration {
 		fmt.Println("> "+watcher.Removetime+" REMOVE : ", file)
-		var err = os.Remove(file)
-		if err != nil {
-			log.Println("error on delete file %s ,error : %s", file, err.Error())
-			return
+
+		if filename.IsDir() {
+			if watcher.Recursive == true {
+				fmt.Println("Remove directory : ", filename.Name())
+				err := os.RemoveAll(file)
+				if err != nil {
+					fmt.Println("Remove directory error : %s", err)
+					return
+				}
+			} else {
+				fmt.Println("do not remove directory : ", filename)
+				return
+			}
+		} else {
+			var err = os.Remove(file)
+			if err != nil {
+				log.Println("error on delete file %s ,error : %s", file, err.Error())
+				return
+			}
 		}
 
 		if len(ip) != 0 {
@@ -275,7 +272,7 @@ func RemoveFile(watcher Watcher, ip string, payload *gelf.Message) {
 		}
 
 	} else {
-		fmt.Println("< ", watcher.Removetime)
+		fmt.Println(filename.Name(), " < ", watcher.Removetime)
 	}
 }
 
@@ -381,7 +378,7 @@ func LogNewWatcher(graylog *Graylog, watcher Watcher) {
 							ip = graylog.Ip + ":" + strconv.Itoa(graylog.Port)
 						}
 						payload, err := payload(watcher.Environment, watcher.Name, string(data), event.Name, watcher.Payload_host, watcher.Payload_level)
-						if err != nil {
+						if err == nil {
 							go RemoveFile(
 								watcher,
 								ip,

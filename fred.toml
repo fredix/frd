@@ -22,7 +22,7 @@ dob = 2017-09-10T20:30:00Z
 
 
 [graylog]
-  ip = "10.10.10.10"
+  ip = "" #set empty to not use graylog
   format = "gelf"
   protocol = "udp"
   port = 12666
@@ -32,13 +32,13 @@ dob = 2017-09-10T20:30:00Z
 [watchers]
   [watchers.test1]
   watcher_type = "loop"
-  name = "Watch test tmp"
+  name = "Watch *.tmp in test"
   directory = "/tmp/test"
   ext_file = ".tmp" # "*" to match all files
   # define file_size : =size or <size or >size
   file_size = "=0"
   size_unit = "bytes" # bytes , kilobytes, megabytes , gigabytes , terabytes
-  remove_recursive = true # if false remove file only, else remove also directories and subdirectories
+  recursive = true # set false to not remove directories, otherwise all directories and their contents will be erased
   payload_host = "srvprod1"
   payload_level = 6
   environment = "prod"
@@ -51,13 +51,13 @@ dob = 2017-09-10T20:30:00Z
 
  [watchers.test2]
   watcher_type = "event"
-  name = "Watcher log test2"
+  name = "Watcher *.log in test2"
   directory = "/tmp/test2"
   ext_file = ".log"
   # define file_size : =size or <size or >size
   file_size = "=0"
   size_unit = "bytes" # bytes , kilobytes, megabytes , gigabytes , terabytes
-  remove_recursive = false
+  recursive = false
   payload_host = "srvlog1"
   payload_level = 6
   environment = "prod"
