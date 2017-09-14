@@ -46,6 +46,7 @@ type Watcher struct {
 	Name          string
 	Environment   string
 	Directory     string
+	Recursive     bool
 	Ext_file      string
 	File_size     string
 	Size_unit     string

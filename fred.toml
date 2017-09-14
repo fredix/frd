@@ -38,6 +38,7 @@ dob = 2017-09-10T20:30:00Z
   # define file_size : =size or <size or >size
   file_size = "=0"
   size_unit = "bytes" # bytes , kilobytes, megabytes , gigabytes , terabytes
+  remove_recursive = true # if false remove file only, else remove also directories and subdirectories
   payload_host = "srvprod1"
   payload_level = 6
   environment = "prod"
@@ -56,6 +57,7 @@ dob = 2017-09-10T20:30:00Z
   # define file_size : =size or <size or >size
   file_size = "=0"
   size_unit = "bytes" # bytes , kilobytes, megabytes , gigabytes , terabytes
+  remove_recursive = false
   payload_host = "srvlog1"
   payload_level = 6
   environment = "prod"
