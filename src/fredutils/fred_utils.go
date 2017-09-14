@@ -79,12 +79,14 @@ func ListFilesAndPush(graylog *Graylog, watcher Watcher) {
 		for _, f := range files {
 			file_ext := filepath.Ext(f.Name())
 			if file_ext == watcher.Ext_file || watcher.Ext_file == "*" {
-				fmt.Println("file to remove : ", watcher.Directory+"/"+f.Name())
+				fmt.Println("ListFilesAndPush file to remove : ", watcher.Directory+"/"+f.Name())
 				payload := payload(watcher.Environment, watcher.Name, f.Name(), watcher.Directory+"/"+f.Name(), watcher.Payload_host, watcher.Payload_level)
-				RemoveFile(
-					watcher,
-					ip,
-					&payload)
+				if payload != nil {
+					RemoveFile(
+						watcher,
+						ip,
+						&payload)
+				}
 			}
 		}
 	} else {
@@ -118,7 +120,8 @@ func payload(environment string, msg string, messagelog string, file string, hos
 	// get last modified time
 	filename, err := os.Stat(file)
 	if err != nil {
-		fmt.Println(err)
+		fmt.Println("payload : error can not stat file : %s", err)
+		return nil
 	}
 	filetime := filename.ModTime()
 	fmt.Println("filetime : ", filetime)
@@ -155,7 +158,7 @@ func RemoveFile(watcher Watcher, ip string, payload *gelf.Message) {
 	// get last modified time
 	filename, err := os.Stat(file)
 	if err != nil {
-		fmt.Println("error can not stat file : %s", err)
+		fmt.Println("RemoveFile error can not stat file : %s", err)
 		return
 	}
 
