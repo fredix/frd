@@ -4,6 +4,7 @@ import (
 	// standard packages
 	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"log"
@@ -80,8 +81,8 @@ func ListFilesAndPush(graylog *Graylog, watcher Watcher) {
 			file_ext := filepath.Ext(f.Name())
 			if file_ext == watcher.Ext_file || watcher.Ext_file == "*" {
 				fmt.Println("ListFilesAndPush file to remove : ", watcher.Directory+"/"+f.Name())
-				payload := payload(watcher.Environment, watcher.Name, f.Name(), watcher.Directory+"/"+f.Name(), watcher.Payload_host, watcher.Payload_level)
-				if payload != nil {
+				payload, err := payload(watcher.Environment, watcher.Name, f.Name(), watcher.Directory+"/"+f.Name(), watcher.Payload_host, watcher.Payload_level)
+				if err != nil {
 					RemoveFile(
 						watcher,
 						ip,
@@ -115,13 +116,13 @@ func payload(environment string, msg string, messagelog string, file string, hos
 }
 */
 
-func payload(environment string, msg string, messagelog string, file string, host string, level int) gelf.Message {
+func payload(environment string, msg string, messagelog string, file string, host string, level int) (gelf.Message, error) {
 
 	// get last modified time
 	filename, err := os.Stat(file)
 	if err != nil {
 		fmt.Println("payload : error can not stat file : %s", err)
-		return nil
+		return gelf.Message{}, errors.New(err.Error())
 	}
 	filetime := filename.ModTime()
 	fmt.Println("filetime : ", filetime)
@@ -148,7 +149,7 @@ func payload(environment string, msg string, messagelog string, file string, hos
 		},
 	}
 
-	return m
+	return m, nil
 }
 
 func RemoveFile(watcher Watcher, ip string, payload *gelf.Message) {
@@ -378,12 +379,13 @@ func LogNewWatcher(graylog *Graylog, watcher Watcher) {
 						if len(graylog.Ip) != 0 && graylog.Port != 0 {
 							ip = graylog.Ip + ":" + strconv.Itoa(graylog.Port)
 						}
-						payload := payload(watcher.Environment, watcher.Name, string(data), event.Name, watcher.Payload_host, watcher.Payload_level)
-
-						go RemoveFile(
-							watcher,
-							ip,
-							&payload)
+						payload, err := payload(watcher.Environment, watcher.Name, string(data), event.Name, watcher.Payload_host, watcher.Payload_level)
+						if err != nil {
+							go RemoveFile(
+								watcher,
+								ip,
+								&payload)
+						}
 					}
 				}
 			case err := <-new_watcher.Errors:
