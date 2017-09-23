@@ -70,8 +70,6 @@ func (p *program) run() {
 
 	fmt.Println("Watchers")
 
-	//        done := make(chan bool)
-
 	for watcherName, watcher := range config.Watchers {
 		fmt.Printf("Watcher: %s (%s, %s, %s %s %d)\n", watcherName, watcher.Directory, watcher.Ext_file, watcher.Payload_host, watcher.Payload_level)
 

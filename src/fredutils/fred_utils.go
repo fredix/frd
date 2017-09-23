@@ -10,9 +10,11 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	// external packages
@@ -42,24 +44,31 @@ type Graylog struct {
 }
 
 type Watcher struct {
-	Watcher_type  string
-	Name          string
-	Environment   string
-	Directory     string
-	Recursive     bool
-	Ext_file      string
-	File_size     string
-	Size_unit     string
-	Payload_host  string
-	Payload_level int
-	Removetime    string
-	Loop_sleep    string
+	Watcher_type     string
+	Name             string
+	Environment      string
+	Directory        string
+	Recursive        bool
+	External_rm      string
+	External_options string
+	Ext_file         string
+	File_size        string
+	Size_unit        string
+	Payload_host     string
+	Payload_level    int
+	Removetime       string
+	Loop_sleep       string
 }
+
+var counter = struct {
+	sync.RWMutex
+	map_files map[string]bool
+}{map_files: make(map[string]bool)}
 
 func LoopDirectory(graylog *Graylog, watcher Watcher) {
 	go func() {
 		for {
-			ListFilesAndPush(graylog, watcher)
+			ListFilesAndRemove(graylog, watcher)
 			//time.Sleep(60000 * time.Millisecond)
 			fmt.Println("watcher.Loop_sleep : ", watcher.Loop_sleep)
 			fmt.Println("watcher.Ext_file : ", watcher.Ext_file)
@@ -70,7 +79,8 @@ func LoopDirectory(graylog *Graylog, watcher Watcher) {
 	}()
 }
 
-func ListFilesAndPush(graylog *Graylog, watcher Watcher) {
+func ListFilesAndRemove(graylog *Graylog, watcher Watcher) {
+
 	var ip string = ""
 	if len(graylog.Ip) != 0 && graylog.Port != 0 {
 		ip = graylog.Ip + ":" + strconv.Itoa(graylog.Port)
@@ -81,7 +91,7 @@ func ListFilesAndPush(graylog *Graylog, watcher Watcher) {
 		for _, f := range files {
 			file_ext := filepath.Ext(f.Name())
 			if file_ext == watcher.Ext_file || watcher.Ext_file == "*" {
-				//fmt.Println("ListFilesAndPush file to remove : ", watcher.Directory+"/"+f.Name())
+				//fmt.Println("ListFilesAndRemove file to remove : ", watcher.Directory+"/"+f.Name())
 				payload, err := payload(watcher.Environment, watcher.Name, f.Name(), watcher.Directory+"/"+f.Name(), watcher.Payload_host, watcher.Payload_level)
 				if err == nil {
 					RemoveFile(
@@ -104,6 +114,15 @@ func payload(environment string, msg string, messagelog string, file string, hos
 		fmt.Println("payload : error can not stat file : %s", err)
 		return gelf.Message{}, errors.New(err.Error())
 	}
+
+	counter.RLock()
+	if _, ok := counter.map_files[file]; ok {
+		fmt.Println("File exist :", ok)
+		counter.RUnlock()
+		return gelf.Message{}, errors.New("file already exist in map")
+	}
+	counter.RUnlock()
+
 	filetime := filename.ModTime()
 	fmt.Println("filetime : ", filetime)
 
@@ -250,21 +269,30 @@ func RemoveFile(watcher Watcher, ip string, payload *gelf.Message) {
 		if filename.IsDir() {
 			if watcher.Recursive == true {
 				fmt.Println("Remove directory : ", filename.Name())
-				err := os.RemoveAll(file)
-				if err != nil {
-					fmt.Println("Remove directory error : %s", err)
-					return
+				if len(watcher.External_rm) == 0 {
+					err := os.RemoveAll(file)
+					if err != nil {
+						fmt.Println("Remove directory error : %s", err)
+						return
+					}
+				} else {
+					go secureDelete(watcher.External_rm, watcher.External_options, file)
 				}
 			} else {
 				fmt.Println("do not remove directory : ", filename)
 				return
 			}
 		} else {
-			var err = os.Remove(file)
-			if err != nil {
-				log.Println("error on delete file %s ,error : %s", file, err.Error())
-				return
+			if len(watcher.External_rm) == 0 {
+				var err = os.Remove(file)
+				if err != nil {
+					log.Println("error on delete file %s ,error : %s", file, err.Error())
+					return
+				}
+			} else {
+				go secureDelete(watcher.External_rm, watcher.External_options, file)
 			}
+
 		}
 
 		if len(ip) != 0 {
@@ -274,6 +302,63 @@ func RemoveFile(watcher Watcher, ip string, payload *gelf.Message) {
 	} else {
 		fmt.Println(filename.Name(), " < ", watcher.Removetime)
 	}
+}
+
+func printCommand(cmd *exec.Cmd) {
+	fmt.Printf("==> Executing: %s\n", strings.Join(cmd.Args, " "))
+}
+
+func printError(err error) {
+	if err != nil {
+		os.Stderr.WriteString(fmt.Sprintf("==> Error: %s\n", err.Error()))
+	}
+}
+
+func printOutput(outs []byte) {
+	if len(outs) > 0 {
+		fmt.Printf("==> Output: %s\n", string(outs))
+	}
+}
+
+func secureDelete(command string, command_options string, file string) {
+	fmt.Println("secure delete command : ", command, command_options, file)
+	cmd := exec.Command(command, command_options, file)
+	//cmd := exec.Command(command, command_options)
+	outBytes := &bytes.Buffer{}
+	errBytes := &bytes.Buffer{}
+	cmd.Stdout = outBytes
+	cmd.Stderr = errBytes
+
+	printCommand(cmd)
+
+	counter.RLock()
+	counter.map_files[file] = true
+	counter.RUnlock()
+
+	log.Printf("Running command and waiting for it to finish...")
+	err := cmd.Start()
+	//err := cmd.Run()
+	printError(err)
+
+	if err != nil {
+		fmt.Println(fmt.Sprint(err) + " START : " + errBytes.String())
+		return
+	}
+
+	err = cmd.Wait()
+	if err != nil {
+		fmt.Println(fmt.Sprint(err) + " WAIT : " + errBytes.String())
+		return
+	} else {
+		fmt.Println("FIN WAIT : ", file)
+	}
+	printOutput(errBytes.Bytes())
+
+	counter.RLock()
+	delete(counter.map_files, file)
+	counter.RUnlock()
+
+	fmt.Println("!!!!!!!!!!   SECURE DELETED !!!!!!!!!!!! :", file)
 }
 
 func PushToGraylogUdp(ip string, payload *gelf.Message) {
