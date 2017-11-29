@@ -100,6 +100,7 @@ func ListFilesAndRemove(graylog *Graylog, watcher Watcher) {
 						&payload)
 				}
 			}
+			time.Sleep(50 * time.Millisecond)
 		}
 	} else {
 		return
@@ -124,7 +125,7 @@ func payload(environment string, msg string, messagelog string, file string, hos
 	counter.RUnlock()
 
 	filetime := filename.ModTime()
-	fmt.Println("filetime : ", filetime)
+	//fmt.Println("filetime : ", filetime)
 
 	filesize := filename.Size()
 
@@ -163,9 +164,9 @@ func RemoveFile(watcher Watcher, ip string, payload *gelf.Message) {
 	}
 
 	if filename.IsDir() == false {
-		fmt.Println("not directory : ", filename)
+		//fmt.Println("not directory : ", filename)
 		filesize_bytes := filename.Size()
-		fmt.Println("filesize_bytes : %s", filesize_bytes)
+		//fmt.Println("filesize_bytes : %s", filesize_bytes)
 
 		specifiedsize, err := strconv.Atoi(watcher.File_size[1:len(watcher.File_size)])
 		if err != nil {
@@ -173,7 +174,7 @@ func RemoveFile(watcher Watcher, ip string, payload *gelf.Message) {
 			return
 		}
 
-		fmt.Println("specifiedsize : %s", specifiedsize)
+		//fmt.Println("specifiedsize : %s", specifiedsize)
 
 		// convert specifiedsize to bytes
 		var filesize_kilobytes int64 = 0
@@ -252,16 +253,16 @@ func RemoveFile(watcher Watcher, ip string, payload *gelf.Message) {
 	// now check gap timestamp
 
 	filetime := filename.ModTime()
-	fmt.Println("filetime : ", filetime)
+	//fmt.Println("filetime : ", filetime)
 
 	tnow := time.Now()
 
 	// get the diff
 	diff := tnow.Sub(filetime)
-	fmt.Println("Lifespan is : ", diff)
+	//fmt.Println("Lifespan is : ", diff)
 
 	duration, _ := time.ParseDuration(watcher.Removetime)
-	fmt.Println("Duration : ", duration)
+	//fmt.Println("Duration : ", duration)
 
 	if diff > duration {
 		fmt.Println("> "+watcher.Removetime+" REMOVE : ", file)
@@ -298,10 +299,10 @@ func RemoveFile(watcher Watcher, ip string, payload *gelf.Message) {
 		if len(ip) != 0 {
 			PushToGraylogUdp(ip, payload)
 		}
-
-	} else {
-		fmt.Println(filename.Name(), " < ", watcher.Removetime)
 	}
+	//	} else {
+	//		fmt.Println(filename.Name(), " < ", watcher.Removetime)
+	//	}
 }
 
 func printCommand(cmd *exec.Cmd) {
