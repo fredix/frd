@@ -8,8 +8,6 @@ WARNING2 : FRED has not been tested on Windows at this time, take care.
 
 ## Build
 
-	export GOPATH=$GOPATH:/home/user/sources/fred
-	
 	cd /home/user/sources/fred/src
 	
 	Linux :
