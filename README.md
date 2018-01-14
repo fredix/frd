@@ -1,4 +1,4 @@
-# Files Removal Enforced Daemon
+# Files Removal Daemon
 
 FRD is a daemon which allow to remove files from your directories. If you use watcher_type = "event" FRD will delete files as soon as they are created and if they match ext_file and file_size. If you need to check a gap between the file date and system date you should use watcher_type="loop".  
 FRD can send trace of removed files to a graylog server.  
