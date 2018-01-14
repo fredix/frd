@@ -1,70 +1,71 @@
 # Files Removal Enforced Daemon
 
-FRED is a daemon which allow to remove files from your directories. If you use watcher_type = "event" FRED will delete files as soon as they are created and if they match ext_file and file_size. If you need to check a gap between the file date and system date you should use watcher_type="loop".  
-FRED can send trace of removed files to a graylog server.  
-WARNING : test FRED with a test directory  
-WARNING2 : FRED has not been tested on Windows at this time, take care.
+FRD is a daemon which allow to remove files from your directories. If you use watcher_type = "event" FRD will delete files as soon as they are created and if they match ext_file and file_size. If you need to check a gap between the file date and system date you should use watcher_type="loop".  
+FRD can send trace of removed files to a graylog server.  
+WARNING : test FRD with a test directory  
+WARNING2 : FRD has not been tested on Windows at this time, take care.
 
 
 ## Build
 
-	cd /home/user/sources/fred/src
+	git clone https://github.com/fredix/frd
+	cd /home/user/sources/frd/src
 	
 	Linux :
 
-	go build -o ../release/linux/fred fred.go
+	go build -o ../release/linux/frd frd.go
 
 	windows :
 
 	32 bits :
 
-	GOOS=windows GOARCH=386 go build -o ../release/win/fred_i386.exe fred.go
+	GOOS=windows GOARCH=386 go build -o ../release/win/frd_i386.exe frd.go
 
 	64 bits :
 
-	GOOS=windows GOARCH=amd64 go build -o ../release/win/fred_amd64.exe fred.go
+	GOOS=windows GOARCH=amd64 go build -o ../release/win/frd_amd64.exe frd.go
 
 ### create 32 bits windows service
 
-	sc create fred binpath= "\"C:\Users\user\sources\fred\win\fred_i386.exe\" \"C:\Users\user\sources\fred\win\fred.toml\" --service" depend= Tcpip
+	sc create frd binpath= "\"C:\Users\user\sources\frd\win\frd_i386.exe\" \"C:\Users\user\sources\frd\win\frd.toml\" --service" depend= Tcpip
 
 
 ## Setup
 
-cp fred /usr/local/bin/  
-edit fred.toml and copy to /etc
+cp frd /usr/local/bin/  
+edit frd.toml and copy to /etc
 
 
 ## systemd service file
 
-/usr/lib/systemd/user/fred.service
+/usr/lib/systemd/user/frd.service
 
 	[Unit]
-	Description=FRED
+	Description=FRD
 	
 	[Service]
 	Type=simple
-	ExecStart=/usr/local/bin/fred /etc/fred.toml
+	ExecStart=/usr/local/bin/frd /etc/frd.toml
 	StandardOutput=null
 	Restart=on-failure
 	
 	[Install]
 	WantedBy=multi-user.target
-	Alias=fred.service
+	Alias=frd.service
 
 start service
 
-	systemctl --user enable fred
-	systemctl --user start fred 
-	systemctl --user status fred -l 
+	systemctl --user enable frd
+	systemctl --user start frd 
+	systemctl --user status frd -l 
 
 ## System V
 
-/etc/init.d/fred 
+/etc/init.d/frd 
 
 	#!/bin/bash
 	#
-	#	/etc/rc.d/init.d/fred
+	#	/etc/rc.d/init.d/frd
 	#
 	#	<description of the *service*>
 	#	<any general comments about this init script>
@@ -74,16 +75,16 @@ start service
 	. /etc/init.d/functions
 
 	start() {
-		echo -n "Starting fred: "
-		/usr/local/bin/fred /etc/fred.toml > /var/log/fred.log 2>&1 &
-		touch /var/lock/subsys/fred
+		echo -n "Starting frd: "
+		/usr/local/bin/frd /etc/frd.toml > /var/log/frd.log 2>&1 &
+		touch /var/lock/subsys/frd
 		return 0
 	}	
 
 	stop() {
-		echo -n "Shutting down fred: "
-		killall fred
-		rm -f /var/lock/subsys/fred
+		echo -n "Shutting down frd: "
+		killall frd
+		rm -f /var/lock/subsys/frd
 		return 0
 	}
 
@@ -103,10 +104,10 @@ start service
 	    reload)
 		;;
 	    condrestart)
-		[ -f /var/lock/subsys/fred ] && restart
+		[ -f /var/lock/subsys/frd ] && restart
 		;;
 	    *)
-		echo "Usage: fred {start|stop|status|reload|restart"
+		echo "Usage: frd {start|stop|status|reload|restart"
 		exit 1
 		;;
 	esac
